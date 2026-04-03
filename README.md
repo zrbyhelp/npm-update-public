@@ -30,6 +30,7 @@ Chinese documentation:
 ```bash
 npm install -g zupublic-node
 zupublic-node init -b https://example.com/api/config -t empty
+zupublic-node diff
 zupublic-node pull
 ```
 
@@ -60,6 +61,22 @@ The filter file is selected from templates maintained inside this package.
 5. Only downloads files whose version changed or that are new
 6. Shows a progress bar while syncing files
 7. Updates local config `publics`
+
+### `zupublic-node diff`
+
+Compares the local recorded `publics` with the latest remote filtered result.
+
+- Shows `ADDED`, `CHANGED`, and `REMOVED` entries
+- Does not download files
+- Does not rewrite `update-public.config.json`
+- Supports `--json` for structured output
+
+Example:
+
+```bash
+zupublic-node diff
+zupublic-node diff --json
+```
 
 ## Config
 

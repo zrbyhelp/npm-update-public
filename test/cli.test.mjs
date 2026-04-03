@@ -245,6 +245,224 @@ test("pull sends configured auth headers for api and asset requests", async () =
   }
 });
 
+test("diff prints added changed and removed assets", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "update-public-diff-"));
+
+  const server = http.createServer((req, res) => {
+    if (req.url === "/api/config") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          data: {
+            files: [
+              { fileName: "logo.txt", url: "/assets/logo.txt", category: "images", version: "v2" },
+              { fileName: "app.js", url: "/assets/app.js", category: "scripts", version: "v1" },
+            ],
+          },
+        }),
+      );
+      return;
+    }
+
+    res.writeHead(404);
+    res.end("not found");
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  assert.ok(address && typeof address === "object");
+  const baseurl = `http://127.0.0.1:${address.port}/api/config`;
+
+  try {
+    await writeFile(
+      path.join(tempDir, "update-public.config.json"),
+      `${JSON.stringify(
+        {
+          baseurl,
+          publics: [
+            { name: "logo.txt", link: "/assets/logo.txt", type: "images", version: "v1" },
+            { name: "legacy.js", link: "/assets/legacy.js", type: "scripts", version: "v9" },
+          ],
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+
+    await writeFile(
+      path.join(tempDir, "update-public.filter.ts"),
+      `export default function filter(response: any) {
+  return {
+    publics: response.data.files.map((item: any) => ({
+      name: item.fileName,
+      link: item.url,
+      type: item.category,
+      version: item.version,
+    })),
+  };
+}
+`,
+      "utf8",
+    );
+
+    const result = await runCli(["diff"], tempDir);
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /ADDED scripts\/app\.js version: v1/);
+    assert.match(result.stdout, /CHANGED images\/logo\.txt version: v1 -> v2/);
+    assert.match(result.stdout, /REMOVED scripts\/legacy\.js version: v9/);
+
+    const config = JSON.parse(await readFile(path.join(tempDir, "update-public.config.json"), "utf8"));
+    assert.equal(config.publics.length, 2);
+    assert.equal(config.publics[0].version, "v1");
+    assert.equal(config.publics[1].version, "v9");
+  } finally {
+    server.close();
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("diff supports json output", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "update-public-diff-json-"));
+
+  const server = http.createServer((req, res) => {
+    if (req.url === "/api/config") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          data: {
+            files: [{ fileName: "app.js", url: "/assets/app.js", category: "scripts", version: "v2" }],
+          },
+        }),
+      );
+      return;
+    }
+
+    res.writeHead(404);
+    res.end("not found");
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  assert.ok(address && typeof address === "object");
+  const baseurl = `http://127.0.0.1:${address.port}/api/config`;
+
+  try {
+    await writeFile(
+      path.join(tempDir, "update-public.config.json"),
+      `${JSON.stringify(
+        {
+          baseurl,
+          publics: [{ name: "app.js", link: "/assets/app.js", type: "scripts", version: "v1" }],
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+
+    await writeFile(
+      path.join(tempDir, "update-public.filter.ts"),
+      `export default function filter(response: any) {
+  return {
+    publics: response.data.files.map((item: any) => ({
+      name: item.fileName,
+      link: item.url,
+      type: item.category,
+      version: item.version,
+    })),
+  };
+}
+`,
+      "utf8",
+    );
+
+    const result = await runCli(["diff", "--json"], tempDir);
+    assert.equal(result.code, 0, result.stderr);
+
+    const output = JSON.parse(result.stdout);
+    assert.deepEqual(output.added, []);
+    assert.deepEqual(output.removed, []);
+    assert.deepEqual(output.changed, [
+      {
+        name: "app.js",
+        type: "scripts",
+        link: "/assets/app.js",
+        previousVersion: "v1",
+        nextVersion: "v2",
+      },
+    ]);
+  } finally {
+    server.close();
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("diff prints no differences message when versions match", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "update-public-diff-same-"));
+
+  const server = http.createServer((req, res) => {
+    if (req.url === "/api/config") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          data: {
+            files: [{ fileName: "app.js", url: "/assets/app.js", category: "scripts", version: "v1" }],
+          },
+        }),
+      );
+      return;
+    }
+
+    res.writeHead(404);
+    res.end("not found");
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  assert.ok(address && typeof address === "object");
+  const baseurl = `http://127.0.0.1:${address.port}/api/config`;
+
+  try {
+    await writeFile(
+      path.join(tempDir, "update-public.config.json"),
+      `${JSON.stringify(
+        {
+          baseurl,
+          publics: [{ name: "app.js", link: "/assets/app.js", type: "scripts", version: "v1" }],
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+
+    await writeFile(
+      path.join(tempDir, "update-public.filter.ts"),
+      `export default function filter(response: any) {
+  return {
+    publics: response.data.files.map((item: any) => ({
+      name: item.fileName,
+      link: item.url,
+      type: item.category,
+      version: item.version,
+    })),
+  };
+}
+`,
+      "utf8",
+    );
+
+    const result = await runCli(["diff"], tempDir);
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /No differences found\./);
+  } finally {
+    server.close();
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 function runCli(args, workdir, options = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [cliPath, ...args], {

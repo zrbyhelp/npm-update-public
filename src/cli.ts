@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 import { cwd, exit } from "node:process";
 
+import { diffCommand } from "./commands/diff.js";
 import { initCommand } from "./commands/init.js";
 import { pullCommand } from "./commands/pull.js";
 
 interface InitCliOptions {
   baseurl?: string;
   templateId?: string;
+}
+
+interface DiffCliOptions {
+  json?: boolean;
 }
 
 async function main(): Promise<void> {
@@ -21,6 +26,9 @@ async function main(): Promise<void> {
     case "pull":
       await pullCommand(currentDirectory);
       console.log("Pulled latest config and static assets.");
+      return;
+    case "diff":
+      await diffCommand(currentDirectory, parseDiffOptions(process.argv.slice(3)));
       return;
     case "--help":
     case "-h":
@@ -38,6 +46,7 @@ function printHelp(): void {
 Usage:
   zupublic-node init [-b <baseurl>] [-t <templateId>]
   zupublic-node pull
+  zupublic-node diff [--json]
 `);
 }
 
@@ -70,6 +79,22 @@ function parseInitOptions(args: string[]): InitCliOptions {
       }
       default:
         throw new Error(`Unknown init option: ${arg}`);
+    }
+  }
+
+  return options;
+}
+
+function parseDiffOptions(args: string[]): DiffCliOptions {
+  const options: DiffCliOptions = {};
+
+  for (const arg of args) {
+    switch (arg) {
+      case "--json":
+        options.json = true;
+        break;
+      default:
+        throw new Error(`Unknown diff option: ${arg}`);
     }
   }
 

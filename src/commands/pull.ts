@@ -1,32 +1,20 @@
-import { buildRequestHeaders } from "../auth.js";
+import { collectAssetDiff } from "../diff.js";
 import { readConfig, writeConfig } from "../config.js";
 import { downloadAsset } from "../download.js";
-import { runFilter } from "../filter.js";
 import { ProgressBar } from "../progress.js";
-import type { PublicAsset } from "../types.js";
+import { loadRemoteAssets } from "../remote.js";
 
 export async function pullCommand(cwd: string): Promise<void> {
-  const config = await readConfig(cwd);
+  const { config, headers, publics } = await loadRemoteAssets(cwd);
+  const diff = collectAssetDiff(config.publics, publics);
+  const changedKeys = new Set([
+    ...diff.added.map((asset) => `${asset.type}/${asset.name}`),
+    ...diff.changed.map((asset) => `${asset.type}/${asset.name}`),
+  ]);
+  const progress = new ProgressBar(publics.length);
 
-  if (config.baseurl.trim() === "") {
-    throw new Error('Config "baseurl" cannot be empty.');
-  }
-
-  const headers = buildRequestHeaders(config);
-  const response = await fetch(config.baseurl, { headers });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${config.baseurl}: ${response.status} ${response.statusText}`);
-  }
-
-  const payload = (await response.json()) as unknown;
-  const filtered = await runFilter(cwd, payload);
-  const previousAssets = new Map(config.publics.map((asset) => [toAssetKey(asset), asset]));
-  const progress = new ProgressBar(filtered.publics.length);
-
-  for (const asset of filtered.publics) {
-    const previousAsset = previousAssets.get(toAssetKey(asset));
-    const changed = hasAssetChanged(previousAsset, asset);
+  for (const asset of publics) {
+    const changed = changedKeys.has(`${asset.type}/${asset.name}`);
 
     if (changed) {
       await downloadAsset(config.baseurl, asset, cwd, headers);
@@ -39,18 +27,7 @@ export async function pullCommand(cwd: string): Promise<void> {
 
   await writeConfig(cwd, {
     baseurl: config.baseurl,
-    publics: filtered.publics,
+    ...(config.auth ? { auth: config.auth } : {}),
+    publics,
   });
-}
-
-function toAssetKey(asset: PublicAsset): string {
-  return `${asset.type}/${asset.name}`;
-}
-
-function hasAssetChanged(previous: PublicAsset | undefined, next: PublicAsset): boolean {
-  if (!previous) {
-    return true;
-  }
-
-  return previous.version !== next.version;
 }

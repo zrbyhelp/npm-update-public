@@ -48,6 +48,7 @@ node dist/cli.js pull
 ```bash
 npm install -g zupublic-node
 zupublic-node init
+zupublic-node diff
 zupublic-node pull
 ```
 
@@ -91,6 +92,24 @@ zupublic-node init -b https://example.com/api/config -t empty
 6. 比较单文件 `version`
 7. 只下载新增文件或版本变化的文件
 8. 保存最新配置并显示进度条
+
+### `zupublic-node diff`
+
+用于查询当前本地记录版本与远端最新版本的差异。
+
+特点：
+
+- 输出新增、版本变更、已删除三类差异
+- 不下载文件
+- 不修改 `update-public.config.json`
+- 支持 `--json` 输出结构化结果
+
+示例：
+
+```bash
+zupublic-node diff
+zupublic-node diff --json
+```
 
 ## 配置文件格式
 
