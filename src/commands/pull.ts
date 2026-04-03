@@ -1,3 +1,4 @@
+import { buildRequestHeaders } from "../auth.js";
 import { readConfig, writeConfig } from "../config.js";
 import { downloadAsset } from "../download.js";
 import { runFilter } from "../filter.js";
@@ -11,7 +12,8 @@ export async function pullCommand(cwd: string): Promise<void> {
     throw new Error('Config "baseurl" cannot be empty.');
   }
 
-  const response = await fetch(config.baseurl);
+  const headers = buildRequestHeaders(config);
+  const response = await fetch(config.baseurl, { headers });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch ${config.baseurl}: ${response.status} ${response.statusText}`);
@@ -27,7 +29,7 @@ export async function pullCommand(cwd: string): Promise<void> {
     const changed = hasAssetChanged(previousAsset, asset);
 
     if (changed) {
-      await downloadAsset(config.baseurl, asset, cwd);
+      await downloadAsset(config.baseurl, asset, cwd, headers);
       progress.tick(`updated ${asset.type}/${asset.name}`);
       continue;
     }

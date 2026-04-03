@@ -5,8 +5,13 @@ export interface PublicAsset {
   version: string;
 }
 
+export interface RequestAuthConfig {
+  headers?: Record<string, string>;
+}
+
 export interface UpdatePublicConfig {
   baseurl: string;
+  auth?: RequestAuthConfig;
   publics: PublicAsset[];
 }
 

@@ -65,9 +65,24 @@ The filter file is selected from templates maintained inside this package.
 
 ```json
 {
-  "baseurl": "",
+  "baseurl": "https://example.com/api/config",
+  "auth": {
+    "headers": {
+      "Authorization": "Bearer ${UPDATE_PUBLIC_TOKEN}"
+    }
+  },
   "publics": []
 }
+```
+
+`auth.headers` is optional. Header values support `${ENV_NAME}` placeholders, so secrets can stay in environment variables instead of being committed to the config file.
+
+Example:
+
+```bash
+# PowerShell
+$env:UPDATE_PUBLIC_TOKEN="your-token"
+zupublic-node pull
 ```
 
 ## Filter contract

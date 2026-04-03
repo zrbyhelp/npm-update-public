@@ -2,7 +2,7 @@ import { access, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { CONFIG_FILE_NAME } from "./constants.js";
-import type { UpdatePublicConfig } from "./types.js";
+import type { RequestAuthConfig, UpdatePublicConfig } from "./types.js";
 
 export function createDefaultConfig(): UpdatePublicConfig {
   return {
@@ -24,6 +24,7 @@ export async function readConfig(cwd: string): Promise<UpdatePublicConfig> {
   const configPath = join(cwd, CONFIG_FILE_NAME);
   const raw = await readFile(configPath, "utf8");
   const parsed = JSON.parse(raw) as Partial<UpdatePublicConfig>;
+  const auth = validateAuthConfig(parsed.auth);
 
   if (typeof parsed.baseurl !== "string") {
     throw new Error(`Invalid config: "baseurl" must be a string in ${CONFIG_FILE_NAME}.`);
@@ -36,6 +37,7 @@ export async function readConfig(cwd: string): Promise<UpdatePublicConfig> {
   return {
     baseurl: parsed.baseurl,
     publics: parsed.publics.map((item, index) => validatePublicAsset(item, index)),
+    ...(auth ? { auth } : {}),
   };
 }
 
@@ -74,4 +76,36 @@ function validatePublicAsset(value: unknown, index: number): UpdatePublicConfig[
     type: asset.type,
     version: asset.version,
   };
+}
+
+function validateAuthConfig(value: unknown): RequestAuthConfig | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== "object" || value === null) {
+    throw new Error(`Invalid config: "auth" must be an object in ${CONFIG_FILE_NAME}.`);
+  }
+
+  const auth = value as Record<string, unknown>;
+
+  if (auth.headers === undefined) {
+    return {};
+  }
+
+  if (typeof auth.headers !== "object" || auth.headers === null || Array.isArray(auth.headers)) {
+    throw new Error(`Invalid config: "auth.headers" must be an object in ${CONFIG_FILE_NAME}.`);
+  }
+
+  const headers: Record<string, string> = {};
+
+  for (const [key, headerValue] of Object.entries(auth.headers)) {
+    if (typeof headerValue !== "string") {
+      throw new Error(`Invalid config: "auth.headers.${key}" must be a string in ${CONFIG_FILE_NAME}.`);
+    }
+
+    headers[key] = headerValue;
+  }
+
+  return { headers };
 }

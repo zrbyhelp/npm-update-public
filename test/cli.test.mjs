@@ -152,10 +152,107 @@ test("pull updates config and downloads assets", async () => {
   }
 });
 
+test("pull sends configured auth headers for api and asset requests", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "update-public-auth-"));
+  const expectedAuth = "Bearer secret-token";
+  const seenAuthHeaders = [];
+
+  const server = http.createServer((req, res) => {
+    seenAuthHeaders.push(req.headers.authorization ?? "");
+
+    if (req.headers.authorization !== expectedAuth) {
+      res.writeHead(401);
+      res.end("unauthorized");
+      return;
+    }
+
+    if (req.url === "/api/config") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          data: {
+            files: [
+              { fileName: "secure.js", url: "/assets/secure.js", category: "scripts", version: "v1" },
+            ],
+          },
+        }),
+      );
+      return;
+    }
+
+    if (req.url === "/assets/secure.js") {
+      res.writeHead(200, { "Content-Type": "application/javascript" });
+      res.end("console.log('secure');");
+      return;
+    }
+
+    res.writeHead(404);
+    res.end("not found");
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  assert.ok(address && typeof address === "object");
+  const baseurl = `http://127.0.0.1:${address.port}/api/config`;
+
+  try {
+    await writeFile(
+      path.join(tempDir, "update-public.config.json"),
+      `${JSON.stringify(
+        {
+          baseurl,
+          auth: {
+            headers: {
+              Authorization: "Bearer ${UPDATE_PUBLIC_TOKEN}",
+            },
+          },
+          publics: [],
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+
+    await writeFile(
+      path.join(tempDir, "update-public.filter.ts"),
+      `export default function filter(response: any) {
+  return {
+    publics: response.data.files.map((item: any) => ({
+      name: item.fileName,
+      link: item.url,
+      type: item.category,
+      version: item.version,
+    })),
+  };
+}
+`,
+      "utf8",
+    );
+
+    const result = await runCli(["pull"], tempDir, {
+      env: {
+        UPDATE_PUBLIC_TOKEN: "secret-token",
+      },
+    });
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.equal(await readFile(path.join(tempDir, "scripts", "secure.js"), "utf8"), "console.log('secure');");
+    assert.deepEqual(seenAuthHeaders, [expectedAuth, expectedAuth]);
+  } finally {
+    server.close();
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 function runCli(args, workdir, options = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [cliPath, ...args], {
       cwd: workdir,
+      env: {
+        ...process.env,
+        ...options.env,
+      },
       stdio: ["pipe", "pipe", "pipe"],
     });
 

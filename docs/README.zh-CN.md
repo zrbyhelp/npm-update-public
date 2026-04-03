@@ -105,6 +105,11 @@ update-public.config.json
 ```json
 {
   "baseurl": "https://example.com/api/config",
+  "auth": {
+    "headers": {
+      "Authorization": "Bearer ${UPDATE_PUBLIC_TOKEN}"
+    }
+  },
   "publics": [
     {
       "name": "logo.png",
@@ -119,11 +124,33 @@ update-public.config.json
 字段说明：
 
 - `baseurl`：远端接口地址
+- `auth.headers`：可选，请求远端接口和下载文件时附带的请求头
 - `publics`：上一次同步后的文件清单
 - `name`：文件名
 - `link`：文件下载地址，可以是绝对地址，也可以是相对地址
 - `type`：文件保存目录名，最终会下载到 `./{type}/{name}`
 - `version`：单个文件版本号，用于判断是否需要重新下载
+
+认证说明：
+
+- `auth.headers` 会同时用于请求 `baseurl` 和下载资源文件
+- 请求头的值支持 `${环境变量名}` 占位，例如 `${UPDATE_PUBLIC_TOKEN}`
+- 建议把 token 放到环境变量里，不要直接写死在仓库配置中
+
+示例：
+
+```json
+{
+  "baseurl": "https://example.com/api/config",
+  "auth": {
+    "headers": {
+      "Authorization": "Bearer ${UPDATE_PUBLIC_TOKEN}",
+      "X-App-Id": "demo"
+    }
+  },
+  "publics": []
+}
+```
 
 ## 过滤器文件格式
 

@@ -3,9 +3,14 @@ import { dirname, join } from "node:path";
 
 import type { PublicAsset } from "./types.js";
 
-export async function downloadAsset(baseurl: string, asset: PublicAsset, cwd: string): Promise<void> {
+export async function downloadAsset(
+  baseurl: string,
+  asset: PublicAsset,
+  cwd: string,
+  headers: Record<string, string> = {},
+): Promise<void> {
   const fileUrl = resolveAssetUrl(baseurl, asset.link);
-  const response = await fetch(fileUrl);
+  const response = await fetch(fileUrl, { headers });
 
   if (!response.ok) {
     throw new Error(`Failed to download ${asset.name} from ${fileUrl}: ${response.status} ${response.statusText}`);
