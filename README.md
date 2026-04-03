@@ -1,14 +1,41 @@
-# update-public
+# ZUPublic-node
 
-`update-public` is a publishable npm CLI for syncing local static assets from a remote API.
+`ZUPublic-node` is a publishable npm CLI for syncing local static assets from a remote API.
+
+npm package name:
+
+- `zupublic-node`
+
+CLI command:
+
+- `zupublic-node`
 
 Chinese documentation:
 
 - [docs/README.zh-CN.md](/E:/ZRRK/npm/update_public/docs/README.zh-CN.md)
 
+## 中文快速说明
+
+`ZUPublic-node` 用于根据远端接口和本地过滤器同步静态资源。
+
+核心特点：
+
+- `init` 初始化配置和过滤器模板
+- `pull` 拉取远端数据并同步静态文件
+- 按单文件 `version` 判断是否需要更新
+- 支持 `-b` 和 `-t` 快速初始化
+
+快速开始：
+
+```bash
+npm install -g zupublic-node
+zupublic-node init -b https://example.com/api/config -t empty
+zupublic-node pull
+```
+
 ## Commands
 
-### `update-public init`
+### `zupublic-node init`
 
 Creates:
 
@@ -24,7 +51,7 @@ If `baseurl` is not passed, the CLI asks for it interactively.
 
 The filter file is selected from templates maintained inside this package.
 
-### `update-public pull`
+### `zupublic-node pull`
 
 1. Reads `update-public.config.json`
 2. Fetches the remote API from `baseurl`
@@ -63,10 +90,10 @@ To add a new selectable template:
 2. Export it from `src/templates/index.ts`
 3. Publish a new npm version
 
-After users update to the new package version, they can select that template during `update-public init`.
+After users update to the new package version, they can select that template during `zupublic-node init`.
 
 Example:
 
 ```bash
-update-public init -b https://example.com/api/config -t empty
+zupublic-node init -b https://example.com/api/config -t empty
 ```

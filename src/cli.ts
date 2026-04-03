@@ -33,11 +33,11 @@ async function main(): Promise<void> {
 }
 
 function printHelp(): void {
-  console.log(`update-public
+  console.log(`zupublic-node
 
 Usage:
-  update-public init [-b <baseurl>] [-t <templateId>]
-  update-public pull
+  zupublic-node init [-b <baseurl>] [-t <templateId>]
+  zupublic-node pull
 `);
 }
 

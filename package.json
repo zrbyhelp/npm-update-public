@@ -1,5 +1,5 @@
 {
-  "name": "update-public",
+  "name": "zupublic-node",
   "version": "0.1.0",
   "description": "CLI for syncing static assets into a local folder from a remote API and filter.",
   "type": "module",
@@ -12,11 +12,12 @@
     "url": "git+https://github.com/zrbyhelp/npm-update-public.git"
   },
   "bin": {
-    "update-public": "./dist/cli.js"
+    "zupublic-node": "./dist/cli.js"
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "docs"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",

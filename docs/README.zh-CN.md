@@ -1,6 +1,14 @@
-# update-public 使用说明
+# ZUPublic-node 使用说明
 
-`update-public` 是一个可发布到 npm 的命令行工具，用于通过远端接口配置更新本地目录中的静态资源。
+`ZUPublic-node` 是一个可发布到 npm 的命令行工具，用于通过远端接口配置更新本地目录中的静态资源。
+
+包名：
+
+- `zupublic-node`
+
+命令名：
+
+- `zupublic-node`
 
 它的工作流程是：
 
@@ -38,14 +46,14 @@ node dist/cli.js pull
 如果已经发布到 npm：
 
 ```bash
-npm install -g update-public
-update-public init
-update-public pull
+npm install -g zupublic-node
+zupublic-node init
+zupublic-node pull
 ```
 
 ## 命令说明
 
-### `init`
+### `zupublic-node init`
 
 用于初始化配置文件和过滤器文件。
 
@@ -62,14 +70,14 @@ update-public pull
 示例：
 
 ```bash
-update-public init -b https://example.com/api/config -t empty
+zupublic-node init -b https://example.com/api/config -t empty
 ```
 
 如果没有传入 `-b`，命令会交互式提示输入 `baseurl`。
 
 如果没有传入 `-t`，命令会让用户从当前包内置模板中选择。
 
-### `pull`
+### `zupublic-node pull`
 
 用于拉取远端配置并同步静态资源。
 
@@ -220,7 +228,7 @@ export default function filter(response: any) {
 用户更新 npm 包后，就可以通过：
 
 ```bash
-update-public init -t 你的模板id
+zupublic-node init -t 你的模板id
 ```
 
 来直接选择模板。
@@ -230,19 +238,19 @@ update-public init -t 你的模板id
 交互初始化：
 
 ```bash
-update-public init
+zupublic-node init
 ```
 
 快速初始化：
 
 ```bash
-update-public init -b https://example.com/api/config -t empty
+zupublic-node init -b https://example.com/api/config -t empty
 ```
 
 拉取并同步：
 
 ```bash
-update-public pull
+zupublic-node pull
 ```
 
 ## 常见问题
