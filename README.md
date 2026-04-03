@@ -31,6 +31,7 @@ Chinese documentation:
 npm install -g zupublic-node
 zupublic-node init -b https://example.com/api/config -t empty
 zupublic-node diff
+zupublic-node update scripts/app.js styles/theme.css
 zupublic-node pull
 ```
 
@@ -76,6 +77,22 @@ Example:
 ```bash
 zupublic-node diff
 zupublic-node diff --json
+```
+
+### `zupublic-node update`
+
+Downloads only the specified remote assets.
+
+- Accepts one or more `type/name` targets
+- Re-downloads the specified files even if the version is unchanged
+- Rewrites only the matching entries in `update-public.config.json`
+- Fails if any requested target is missing from the latest remote result
+
+Example:
+
+```bash
+zupublic-node update scripts/app.js
+zupublic-node update scripts/app.js styles/theme.css
 ```
 
 ## Config

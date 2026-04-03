@@ -4,6 +4,7 @@ import { cwd, exit } from "node:process";
 import { diffCommand } from "./commands/diff.js";
 import { initCommand } from "./commands/init.js";
 import { pullCommand } from "./commands/pull.js";
+import { updateCommand } from "./commands/update.js";
 
 interface InitCliOptions {
   baseurl?: string;
@@ -30,6 +31,9 @@ async function main(): Promise<void> {
     case "diff":
       await diffCommand(currentDirectory, parseDiffOptions(process.argv.slice(3)));
       return;
+    case "update":
+      await updateCommand(currentDirectory, process.argv.slice(3));
+      return;
     case "--help":
     case "-h":
     case undefined:
@@ -47,6 +51,7 @@ Usage:
   zupublic-node init [-b <baseurl>] [-t <templateId>]
   zupublic-node pull
   zupublic-node diff [--json]
+  zupublic-node update <type/name> [type/name ...]
 `);
 }
 

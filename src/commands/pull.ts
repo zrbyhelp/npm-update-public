@@ -3,18 +3,19 @@ import { readConfig, writeConfig } from "../config.js";
 import { downloadAsset } from "../download.js";
 import { ProgressBar } from "../progress.js";
 import { loadRemoteAssets } from "../remote.js";
+import { toAssetKey } from "../targets.js";
 
 export async function pullCommand(cwd: string): Promise<void> {
   const { config, headers, publics } = await loadRemoteAssets(cwd);
   const diff = collectAssetDiff(config.publics, publics);
   const changedKeys = new Set([
-    ...diff.added.map((asset) => `${asset.type}/${asset.name}`),
+    ...diff.added.map((asset) => toAssetKey(asset)),
     ...diff.changed.map((asset) => `${asset.type}/${asset.name}`),
   ]);
   const progress = new ProgressBar(publics.length);
 
   for (const asset of publics) {
-    const changed = changedKeys.has(`${asset.type}/${asset.name}`);
+    const changed = changedKeys.has(toAssetKey(asset));
 
     if (changed) {
       await downloadAsset(config.baseurl, asset, cwd, headers);

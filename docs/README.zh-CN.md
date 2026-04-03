@@ -49,6 +49,7 @@ node dist/cli.js pull
 npm install -g zupublic-node
 zupublic-node init
 zupublic-node diff
+zupublic-node update scripts/app.js styles/theme.css
 zupublic-node pull
 ```
 
@@ -109,6 +110,25 @@ zupublic-node init -b https://example.com/api/config -t empty
 ```bash
 zupublic-node diff
 zupublic-node diff --json
+```
+
+### `zupublic-node update`
+
+用于只更新指定的一个或多个文件。
+
+特点：
+
+- 参数使用 `type/name` 形式，例如 `scripts/app.js`
+- 支持一次指定多个目标文件
+- 即使版本未变化，也会重新下载指定文件
+- 只更新配置中对应条目，不同步其他未指定文件
+- 如果任一目标不存在于远端结果中，则直接报错
+
+示例：
+
+```bash
+zupublic-node update scripts/app.js
+zupublic-node update scripts/app.js styles/theme.css
 ```
 
 ## 配置文件格式
